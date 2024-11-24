@@ -44,6 +44,22 @@
             <v-avatar color="white"><v-icon color="error" large>mdi-folder-off</v-icon></v-avatar>
           </cc-tooltip>
         </main-btn>
+        <main-btn
+          icon="cci-content-manager"
+          :to="'/data-manipulator'"
+          help="Decrypt messages"
+          @hover="ccLog('data')"
+        >
+        Data Manipulator
+        </main-btn>
+        <main-btn
+          icon="cci-content-manager"
+          :to="'/map'"
+          help="Explore the Áine system"
+          @hover="ccLog('map')"
+        >
+        Map
+        </main-btn>
       </v-row>
     </v-container>
 
@@ -298,6 +314,16 @@ export default Vue.extend({
           this.$refs['log'].print(
             'gms-upm compcon changelog -l',
             'View COMP/CON changelog and latest updates'
+          )
+        case 'data':
+          this.$refs['log'].print(
+            'man cracking',
+            'Decrypt hidden messages contained within your databases'
+          )
+        case 'map':
+          this.$refs['log'].print(
+            'man map',
+            'Explore the Áine system'
           )
         default:
           break

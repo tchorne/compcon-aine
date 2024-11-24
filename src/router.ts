@@ -3,6 +3,7 @@ import Router from 'vue-router'
 import encounterRoutes from './features/encounters/routes'
 import pilotRoutes from './features/pilot_management/routes'
 import compendiumRoutes from './features/compendium/routes'
+import mapRoutes from './features/map/routes'
 import { getModule } from 'vuex-module-decorators'
 import { NavStore, store } from './store'
 import updateChecker from './util/UpdateChecker'
@@ -29,6 +30,15 @@ const r = new Router({
       name: 'ui-test',
       component: require('@/features/ui_test/index').default,
     },
+    {
+      path: '/data-manipulator',
+      name: 'data-manipulator',
+      component: require('@/features/data_manipulator/index').default,
+    },
+    ...mapRoutes.map(route => ({
+      ...route,
+      path: (route.path = '/map/' + route.path),
+    })),
     ...compendiumRoutes.map(route => ({
       ...route,
       path: (route.path = '/compendium/' + route.path),
@@ -52,6 +62,7 @@ r.beforeEach((to, from, next) => {
   const ns = getModule(NavStore, store)
 
   if (to.path.includes('/compendium')) ns.setNavMode('compendium')
+  else if (to.path.includes('/map')) ns.setNavMode('compendium')
   else if (to.path.includes('/pilot') || to.path.includes('/active') || to.path.includes('/new'))
     ns.setNavMode('pilot')
   else if (to.path.includes('/gm')) ns.setNavMode('encounter')
