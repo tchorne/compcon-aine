@@ -12,7 +12,7 @@
       >
       THE ÁINE SYSTEM
       </div>
-      <Map />
+      <PlanetMap />
     </v-container>
     <v-slide-y-reverse-transition mode="out-in">
       <router-view style="width: 100vw; padding-top: 50px" />
@@ -22,12 +22,12 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import Map from './components/Map.vue'
+import PlanetMap from './components/Map.vue'
 
 export default Vue.extend({
-  name: 'map',
+  name: 'planetmap',
   components: {
-    Map,
+    PlanetMap,
   },
   data() {
     return {}
