@@ -4,9 +4,10 @@
   "description": "A digital toolkit for the LANCER TTRPG",
   "author": "Massif Press",
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "serve": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service serve",
     "serve-https": "vue-cli-service serve --https",
-    "build": "vue-cli-service build"
+    "build": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service build",
+    "lint": "set NODE_OPTIONS=--openssl-legacy-provider && vue-cli-service lint"
   },
   "dependencies": {
     "@aws-amplify/datastore": "^2.9.3",
