@@ -21,7 +21,7 @@ const triGeometry = new THREE.ShapeGeometry(shape);
 const triMesh = new THREE.InstancedMesh(triGeometry, material, 6000);
 
 export default {
-    name: 'Planet',
+    name: 'AsteroidGroup',
     props: {
         position: {
             type: Object,
@@ -37,9 +37,13 @@ export default {
                 return Object.keys(value).every(key => typeof value[key] === 'number')
             }
         },
-        radius: {
+        innerRadius: {
             type: Number,
             default: 1,
+        },
+        outerRadius: {
+            type: Number,
+            default: 2,
         },
         wireframeColor: {
             type: String,
@@ -49,21 +53,20 @@ export default {
             type: Number,
             default: 1,
         },
-        resolution: {
+        count: {
             type: Number,
-            default: RESOLUTION
-        },
+            default: 6000
+        }
         
         
     },
     data() {
         return {
             mesh: null,
-            isTri: false,
         }
     },
     mounted() {
-        console.log("Planet mounted")
+        console.log("AsteroidGroup mounted")
         this.createPlanet()
     },
     beforeDestroy() {
@@ -75,14 +78,23 @@ export default {
     },
     methods: {
         createPlanet() {
-            if (this.resolution == 1){
-                this.isTri = true
-                this.mesh = triMesh
-            } else {
-                const geometry = new THREE.SphereGeometry(this.radius, this.resolution, this.resolution)
-                this.mesh = new THREE.Mesh(geometry, material)
+            this.mesh = new THREE.InstancedMesh(triGeometry, material, this.count)
+            let dummy = new THREE.Object3D()
+
+            for (let i = 0; i < this.count; i++) {
+                const radius = Math.random() * (this.outerRadius - this.innerRadius) + this.innerRadius
+                const angle = Math.random() * Math.PI * 2
+
+                const x = Math.cos(angle) * radius
+                const y = Math.sin(angle) * radius
+
+                dummy.position.set(x, y, 0)
+                dummy.updateMatrix()
+                this.mesh.setMatrixAt(i, dummy.matrix)
             }
+
             this.mesh.position.set(this.position.x, this.position.y, this.position.z)
+            
             if (this.$parent.scene) {
                 this.$parent.scene.add(this.mesh)
                 console.log("Added to scene")

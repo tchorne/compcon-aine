@@ -1,7 +1,7 @@
 <template>
   <span class="clickable-text" @click="onClick" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave" @focus="onFocus" @focusout="onFocusOut" @blur="onBlur" tabindex="0">
     <span v-if="hovered" class="bracket">[</span>
-    <span class="mytext">{{ text }}</span>
+    <span class="mytext">{{ text.toUpperCase() }}</span>
     <span v-if="hovered" class="bracket">]</span>
   </span>
 </template>
@@ -65,9 +65,9 @@ export default {
 }
 
 span {
-    color: rgb(0, 228, 0);
+    color: #8f102b;
     font-size: 24px;
-    font-family: 'Dune Rise';
+    font-family: 'Consolas';
 }
 
 </style>
