@@ -18,7 +18,6 @@ shape.lineTo(x + 2, y - 2);
 shape.lineTo(x, y + 2);
 
 const triGeometry = new THREE.ShapeGeometry(shape);
-const triMesh = new THREE.InstancedMesh(triGeometry, material, 6000);
 
 export default {
     name: 'Planet',
@@ -75,13 +74,8 @@ export default {
     },
     methods: {
         createPlanet() {
-            if (this.resolution == 1){
-                this.isTri = true
-                this.mesh = triMesh
-            } else {
-                const geometry = new THREE.SphereGeometry(this.radius, this.resolution, this.resolution)
-                this.mesh = new THREE.Mesh(geometry, material)
-            }
+            const geometry = new THREE.SphereGeometry(this.radius, this.resolution, this.resolution)
+            this.mesh = new THREE.Mesh(geometry, material)
             this.mesh.position.set(this.position.x, this.position.y, this.position.z)
             if (this.$parent.scene) {
                 this.$parent.scene.add(this.mesh)

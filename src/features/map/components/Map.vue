@@ -8,12 +8,13 @@
             :rotateSpeed="planet.rotateSpeed"
             :resolution="planet.resolution"
             ref="planet"/>
-        <Planet v-for="planet in beltObjects" 
-            :key="planet.id"
-            :position="planet.position"
-            :radius="planet.radius"
-            :rotateSpeed="planet.rotateSpeed"
-            :resolution="planet.resolution"
+        <AsteroidGroup v-for="object in beltObjects" 
+            :key="object.id"
+            :position="object.position"
+            :innerRadius="object.innerRadius"
+            :outerRadius="object.outerRadius"
+            :count="object.count"
+            :orbitSpeed="object.orbitSpeed"
             ref="beltobj"/>
         </canvas>
         <div class="map-overlay">
@@ -26,16 +27,18 @@
                 </div>
             </div>
             <div class="planet-description-mask">
+                
                 <div class="planet-description-content" :class="{ typing: isTyping }">
-                    
                     <h1 :class="{ typing: isTyping }">{{selectedPlanetInfo.name}}</h1>
-                    <p>{{selectedPlanetInfo.mass}}</p>
+                    <p><strong>{{selectedPlanetInfo.mass}}</strong></p>
                     <hr>
                     <br>
-                    <p>{{selectedPlanetInfo.description}}</p>
+                    <p><strong>{{selectedPlanetInfo.description}}</strong></p>
                     <br>
                     <hr>
+                    
                 </div>
+                
             </div>
         </div>
     </div>
@@ -45,6 +48,7 @@
 <script>
 import * as THREE from 'three'
 import Planet from './Planet.vue'
+import AsteroidGroup from './AsteroidGroup.vue'
 import TerminalButton from './TerminalButton.vue';
 
 const defaultPlanet = {
@@ -178,34 +182,37 @@ const planetData = [
 
 ]
 
-let beltIndex = 100
-
-function generateBeltObject(){
-    const MAX_SIZE = 0.1
-    const MIN_SIZE = 0.03
-    const MAX_DISTANCE = 16
-    const MIN_DISTANCE = 9
-    const MAX_ROTATION_SPEED = 0.03
-    const MIN_ROTATION_SPEED = 0.01
-
-    const beltObject = {
-        ...defaultPlanet,
-        id: beltIndex++,
+const beltData = [
+    { // Hudson-Lilah Belt
+        id: 100,
         position: { x: 0, y: 0, z: 0 },
-        radius: Math.random() * (MAX_SIZE - MIN_SIZE) + MIN_SIZE,
+        innerRadius: 12,
+        outerRadius: 18,
         orbits: 1,
-        orbitRadius: Math.random() * (MAX_DISTANCE - MIN_DISTANCE) + MIN_DISTANCE,
-        rotateSpeed: Math.random() * (MAX_ROTATION_SPEED - MIN_ROTATION_SPEED) + MIN_ROTATION_SPEED,
-        resolution: 1,
-        orbitOffset: Math.random() * 3.14159 * 2
-    }
-    return beltObject
-}
+        count: 500,
+    },
+    { // Tuotatis belt
+        id: 101,
+        position: { x: 0, y: 0, z: 0 },
+        innerRadius: 4,
+        outerRadius: 6,
+        orbits: 7,
+        orbitSpeed: 0.2,
+        count: 100,
+    },
+    { // Sirona belt
+        id: 102,
+        position: { x: 0, y: 0, z: 0 },
+        innerRadius: 1.3,
+        outerRadius: 1.9,
+        orbits: 4,
+        orbitSpeed: -0.07,
+        count: 200,
+    },
 
-let beltObjects = []
-for (let i = 0; i < 6000; i++) {
-    beltObjects.push(generateBeltObject())
-}
+
+]
+
 
 planetData.forEach(data => {
     data.description = planetDescriptions[data.id]
@@ -216,13 +223,19 @@ planetData.forEach((planet) => {
     idsToPlanets[planet.id] = planet
 });
 
+let idsToBelts = {}
+beltData.forEach((belt) => {
+    idsToBelts[belt.id] = belt
+});
+
 
 
 export default {
 name: "PlanetMap",
 components: {
-    Planet: Planet,
-    TerminalButton
+    Planet,
+    TerminalButton,
+    AsteroidGroup,
 },
 data() {
 return {
@@ -231,7 +244,7 @@ return {
     renderer: null,
     testCube: null,
     planets: planetData,
-    beltObjects: beltObjects,
+    beltObjects: beltData,
     focusedPlanet: 1,
     cameraDistance: 40,
     lookpos: new THREE.Vector3(0,0,0),
@@ -271,6 +284,39 @@ methods: {
             canvas: this.$refs.mapCanvas,
             antialias: true
         })
+
+        // Create a plane for the background
+        
+        const shape = new THREE.Shape();
+
+        const x = 0;
+        const y = 0;
+        const s = 4
+        shape.moveTo(x - s, y - s);
+        shape.lineTo(x + s, y - s);
+        shape.lineTo(x + s, y + s);
+        shape.lineTo(x - s, y + s);
+
+        const quadGeometry = new THREE.ShapeGeometry(shape);
+        
+        const planeMaterial = new THREE.MeshBasicMaterial({ color: 0xcfcfcf, wireframe:true })
+
+        const plane = new THREE.InstancedMesh(quadGeometry, planeMaterial, 100*100)
+        const dummy = new THREE.Object3D();
+        dummy.rotateX(-Math.PI/2)
+        for (let i = 0; i < 100; i++) {
+            for (let j = 0; j < 100; j++) {
+                dummy.position.set((i-50)*s*2, 0, (j-50)*s*2)
+                
+                dummy.updateMatrix();
+                plane.setMatrixAt(i*100 + j, dummy.matrix);
+            }
+        }
+        plane.instanceMatrix.needsUpdate = true
+
+        plane.position.set(0, -5, 0)
+        this.scene.add(plane)
+
         this.renderer.setClearColor(0xf4f4f4, 1)
         this.renderer.setSize(window.innerWidth, window.innerHeight)
     },
@@ -284,12 +330,9 @@ methods: {
         this.renderer.render(this.scene, this.camera)
     },
     calculateOrbits() {
-        let planets = this.planets.concat(this.beltObjects)
+        let planets = this.planets
         planets.sort((a, b) => a.orbits || 0 - b.orbits || 0);
         
-        //let beltRotationMatrix = THREE.Matrix4().rotateY(0.001 * Date.now())
-
-
         for (let i = 0; i < planets.length; i++) {
             let planet = planets[i]
             if (planet && planet.orbits != null) {
@@ -301,10 +344,15 @@ methods: {
                 planet.position.z = parent.position.z + planet.orbitRadius * Math.sin(planet.orbitSpeed * Date.now())
             }
         }
+
+        this.beltObjects.forEach((belt) => {
+            belt.position.x = idsToPlanets[belt.orbits].position.x
+            belt.position.z = idsToPlanets[belt.orbits].position.z
+        });
     },
     updatePlanets(deltaTime) {
-        this.$refs.beltobj.forEach((planet) => {
-            planet.updateRotation(deltaTime)
+        this.$refs.beltobj.forEach((obj) => {
+            obj.updateRotation(deltaTime)
         });
 
         this.$refs.planet.forEach((planet) => {
@@ -375,7 +423,7 @@ watch: {
 <style scoped>
 .map-container {
 width: 100%;
-height: 100vh;
+height: 100%;
 overflow: hidden;
 position: relative;
 border-radius: 2vh;
@@ -395,12 +443,6 @@ width: 100%;
 height: 100%;
 }
 
-.map-overlay-content {
-color: white;
-padding: 10px;
-
-}
-
 .map-overlay h1 {
 font-size: 72px;
 font-family: 'Dune Rise';
@@ -412,6 +454,20 @@ font-size: 16px;
 bottom: 0;
 left: 0;
 position: absolute;
+margin: 15;
+padding: 2vh;
+
+}
+
+.planet-description-back { 
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: max-content;
+    height: 100%;
+    /* background-color: #f4f4f480; */
+    background-color: #fffffff4;
+    /* filter: blur(40px); */
 }
 
 .planet-description-mask {
@@ -432,6 +488,11 @@ white-space: nowrap;
 overflow: hidden;
 justify-content: center;
 margin: 0 auto;
+backdrop-filter: blur(2px);
+background-color: #f4f4f445;
+padding: 10px;
+
+
 }
 
 .planet-description-content :hover {
@@ -440,6 +501,7 @@ margin: 0 auto;
 
 
 .planet-description-content p{
+
 text-wrap: wrap;
 max-inline-size: 40vh;
 
@@ -459,9 +521,11 @@ height: 2px
 @keyframes typing {
     from {
         width: 0;
+
     }
     to {
         width: 100%;
+
     }
 }
 
