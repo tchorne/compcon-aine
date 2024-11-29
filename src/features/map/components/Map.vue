@@ -330,11 +330,11 @@ methods: {
         this.renderer.render(this.scene, this.camera)
     },
     calculateOrbits() {
-        let planets = this.planets
-        planets.sort((a, b) => a.orbits || 0 - b.orbits || 0);
+        let myPlanets = Array.from(this.planets)
+        myPlanets.sort((a, b) => a.orbits || 0 - b.orbits || 0);
         
-        for (let i = 0; i < planets.length; i++) {
-            let planet = planets[i]
+        for (let i = 0; i < myPlanets.length; i++) {
+            let planet = myPlanets[i]
             if (planet && planet.orbits != null) {
                 let parent = idsToPlanets[planet.orbits]
                 if (planet.orbitSpeed == null) {
