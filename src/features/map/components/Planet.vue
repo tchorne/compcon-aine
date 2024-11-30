@@ -58,7 +58,6 @@ export default {
     data() {
         return {
             mesh: null,
-            isTri: false,
         }
     },
     mounted() {
@@ -81,6 +80,16 @@ export default {
                 this.$parent.scene.add(this.mesh)
                 console.log("Added to scene")
             }
+
+            // create the orbital lines
+            let points = [];
+            let angle = 0
+            for(let i = 0; i < 16; i++){
+                angle = 2 * Math.PI * i / 16
+                points.push( new THREE.Vector3( Math.cos(angle) * this.radius, 0, Math.sin(angle) * this.radius ) );
+            }
+            points.push( points[0] );
+
         },
         updateRotation(deltaTime){
             this.mesh.rotation.y += 0.0001 * deltaTime * this.rotateSpeed

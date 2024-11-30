@@ -19,10 +19,11 @@
         </canvas>
         <div class="map-overlay">
             <div class="map-overlay-content">
-                <div v-for="planet in planets">
+                <div v-for="planet in pdescriptions">
                     <TerminalButton @click="() => planetSelected(planet.id)"
-                        :text="planet.description.name"
-                    
+                        v-if="(planet.moon || false)==false || (planet.visibleUnder || []).includes(focusedPlanet) "
+                        :small="planet.moon"
+                        :text="planet.name"
                         />
                 </div>
             </div>
@@ -33,7 +34,7 @@
                     <p><strong>{{selectedPlanetInfo.mass}}</strong></p>
                     <hr>
                     <br>
-                    <p><strong>{{selectedPlanetInfo.description}}</strong></p>
+                    <p class="planet-description-description"><strong>{{selectedPlanetInfo.description}}</strong></p>
                     <br>
                     <hr>
                     
@@ -63,43 +64,135 @@ const defaultPlanet = {
 
 const planetDescriptions = {
     1: {
+        order: 0,
         name: "Aine",
         mass: "0.6 M☉",
         description: "The Sun of this system. The red dwarf leaves a cool light on the system, filling the system with a sense of melancholy.",
     },
     2: {
+        order: 1,
         name: "Lugos",
         mass: "0.2 M🜨",
-        description: "Tidally locked and without any atmosphere, Lugus is probably the least hospitable planet in this system."
-    },
-    3: {
-        name: "Sucellus",
-        mass: "0.1 M🜨",
-        description: "Located in the middle of the Hudson-Lilah Belt, this small dwarf planet acts as a critical resource node for the systems power grid."
-    },
-    4: {
-        name: "Sirona",
-        mass: "2.3 M🜨",
-        description: "Sirona is a rocky planet with a rocky core and a hot, dense atmosphere. It is the most habitable planet in this system."
-    },
-    5: {
-        name: "Bodua",
-        mass: "0.5 M🜨",
-        description: "Cold and small. This planet has little of value to note other than a couple research stations with populations in the triple digits."
-    },
-    6: {
-        name: "Nemetoma",
-    },
-    7: {
-        name: "Toutatis",
+        gravity: "0.4g",
+        description: "A barren, tidally locked rock with no atmosphere, Lugos alternates between a scorched dayside and a frigid, lifeless nightside. Its pitted surface is a stark reminder of the system's earliest days."
     },
     8: {
+        order: 2,
         name: "The Hudson-Lilah Belt",
+        description: "A sprawling asteroid belt between Lugos and Sirona, it’s a chaotic yet vital region. The synchronized mirrors of the system's Concentrated Solar Power Network gleam among the rocks, harnessing Aine’s energy for the rest of the system."
+    },    
+    3: {
+        order: 3,
+        name: "Lilah",
+        mass: "0.1 M🜨",
+        gravity: "0.5g",
+        moon: true,
+        visibleUnder: ['8', '3'],
+        description: "Known by its official name, Sucellus, this dwarf planet is a speck in the middle of the Hudson-Lilah Belt. Its name honors Lilah, one of the first twins born in the Aine system, alongside her brother Hudson, who lent his name to the surrounding asteroid belt."
+    },
+    4: {
+        order: 4,
+        name: "Sirona",
+        mass: "2.3 M🜨",
+        gravity: "0.4g",
+        description: `The main terrestrial population center of the Aine system. The high gravitational pull requires biomechanical augmentations for anyone living there long term. Children under the age of 18 remain on the orbital colonies and perform intense physical training should they wish to live on Sirona permanently.
+
+The asteroids that form Sirona's ring are rich with water and pure metals, making Sirona's rings the primary shipyard of the system. 
+
+Sirona also happens to be the home of The Spire, the largest space elevator in the local star cluster, stretching all the way to the inner ring.`
+    },
+    5: {
+        order: 5,
+        name: "Bodua",
+        mass: "0.5 M🜨",
+        description: "A cold, remote world that feels more like an outpost than a planet. Its few research stations, nestled in deep craters to shield against the icy winds, are its only signs of activity."
+    },
+    6: {
+        order: 6,
+        name: "Nemetoma",
+        mass: "24.4 M🜨",
+        description: "The system's largest planet, Nemetoma, is a swirling giant of muted ochres and reds. Its many moons and floating colonies are homes to hundreds of millions of people, forming a vast, scattered web of interconnected communities."
     },
     9: {
-        name: "",
+        order: 7,
+        name: "Belisama",
+        mass: "0.15 M🜨",
+        gravity: "0.45 g",
+        moon: true,
+        parent: 6,
+        visibleUnder: ['6', '9', '10', '11', '12'],
+        description: "Belisama’s rocky surface is riddled with jagged cliffs and sprawling craters, but its true mystery lies beneath. Its internal composition defies all known geologic models, leading scientists to theorize it might be the fragmented remnant of an ancient, alien megastructure. The moon’s enigmatic properties make it a hub for research and speculation, though mining efforts have yielded limited results."
     },
+    10: {
+        order: 8,
+        name: "Senuna",
+        mass: "0.22 M🜨",
+        gravity: "0.55 g",
+        moon: true,
+        parent: 6,
+        visibleUnder: ['6', '9', '10', '11', '12'],
+        description: "Blanketed by dense, jungle-like forests, Senuna is a breathtaking example of successful terraforming. The moon’s vibrant ecosystem pulses with an almost otherworldly energy, and long-term residents often report vivid spiritual visions or even a sense of connection to the moon itself. Some dismiss this as the effects of unknown pollen or spores, but others believe Senuna holds deeper, perhaps even sentient, mysteries."
+    },
+    11: {
+        order: 9,
+        name: "Coventina",
+        mass: "0.18 M🜨",
+        gravity: "0.47 g",
+        moon: true,
+        parent: 6,
+        visibleUnder: ['6', '9', '10', '11', '12'],
+        description: "Almost entirely covered in liquid water, Coventina is a moon of ceaseless motion. Tidal forces from Nemetoma drive immense geothermal vents, creating an ever-changing seascape. Floating research stations and underwater habitats explore the moon’s vast depths, where unique aquatic ecosystems thrive in the mineral-rich waters."
+    },
+    12: {
+        order: 10,
+        name: "Icovelluana",
+        mass: "0.25 M🜨",
+        gravity: "0.62 g",
+        moon: true,
+        parent: 6,
+        visibleUnder: ['6', '9', '10', '11', '12'],
+        description: "A gleaming beacon in the void, Icovelluana’s surface is dominated by sprawling chrome cities that reflect Nemetoma’s ochre glow. The icy moon’s industrial hubs produce some of the system’s most advanced machinery, and its cutting-edge architecture is a testament to its inhabitants’ engineering prowess. Beneath its shimmering cities, vast ice reserves fuel its energy infrastructure."
+    }, 
+    7: {
+        order: 11,
+        name: "Toutatis",
+        mass: "17.9 M🜨",
+        description: "A gas giant encircled by an immense ring system, Toutatis is an awe-inspiring sight. Its rings, dense with ice and debris, make it a frequent target for mining and an object of fascination for astronomers."
+    },
+    13: {
+        order: 12,
+        name: "Litavis",
+        mass: "0.12 M🜨",
+        gravity: "0.41 g",
+        moon: true,
+        parent: 7,
+        visibleUnder: ['7', '13', '14'],
+        description: "Litavis’ surface is a maze of jagged, metallic ridges and dark chasms filled with glittering crystalline formations. Rich in rare minerals, this moon is a haven for mining operations, though its unstable terrain and frequent tectonic activity make extraction a dangerous endeavor. Despite its hazards, Litavis’ breathtaking crystal caverns are a major draw for thrill-seekers and off-world explorers alike."
+    },
+    14: {
+        order: 13,
+        name: "Dea Latis",
+        mass: "0.08 M🜨",
+        gravity: "0.35 g",
+        moon: true,
+        parent: 7,
+        visibleUnder: ['7', '13', '14'],
+        description: "Dea Latis is a volcanic moon cloaked in ash and fire, with rivers of molten rock carving glowing veins across its surface. Its volatile nature has deterred large-scale habitation, but its abundant geothermal energy and dense deposits of heavy metals make it a key industrial site. Automated foundries harness its intense heat to smelt ores."
+    }
+
 }
+
+for (const [key, value] of Object.entries(planetDescriptions)){
+    value.id = key
+}
+
+let planetDescriptionsArray = []
+for (const [key, value] of Object.entries(planetDescriptions)){
+    planetDescriptionsArray.push(value)
+}
+
+planetDescriptionsArray.sort((a, b) => a.order - b.order)
+
 
 const BLANK_PLANET_DESCRIPTION = {
     name: "",
@@ -177,7 +270,71 @@ const planetData = [
         orbits: 1,
         orbitRadius: 55,
         rotateSpeed: 3,
-    }
+    },
+    //#region Moons
+    { // Belisama
+        ...defaultPlanet,
+        id: 9,
+        position: { x: 0, y: 0, z: 0 },
+        radius: 0.26,
+        orbits: 6,
+        orbitRadius: 3,
+        rotateSpeed: 3,
+        resolution: 4,
+    },
+    { // Senuna
+        ...defaultPlanet,
+        id: 10,
+        position: { x: 0, y: 0, z: 0 },
+        radius: 0.3,
+        orbits: 6,
+        orbitRadius: 4,
+        rotateSpeed: 3,
+        resolution: 4,
+    },
+    { // Coventina
+        ...defaultPlanet,
+        id: 11,
+        position: { x: 0, y: 0, z: 0 },
+        radius: 0.3,
+        orbits: 6,
+        orbitRadius: 6,
+        rotateSpeed: 3,
+        resolution: 4,
+    },
+    { // Icovelluana
+        ...defaultPlanet,
+        id: 12,
+        position: { x: 0, y: 0, z: 0 },
+        radius: 0.2,
+        orbits: 6,
+        orbitRadius: 6.5,
+        rotateSpeed: 3,
+        resolution: 4,
+    },
+    { // Litavis
+        ...defaultPlanet,
+        id: 13,
+        position: { x: 0, y: 0, z: 0 },
+        radius: 0.3,
+        orbits: 7,
+        orbitRadius: 4.5,
+        rotateSpeed: 3,
+        resolution: 4,
+        orbitSpeed: 0.0003
+
+    },
+    { // Dea Latis
+        ...defaultPlanet,
+        id: 14,
+        position: { x: 0, y: 0, z: 0 },
+        radius: 0.32,
+        orbits: 7,
+        orbitRadius: 7,
+        rotateSpeed: 3,
+        resolution: 4,
+        orbitSpeed: 0.0002
+    },
     //#endregion
 
 ]
@@ -222,6 +379,8 @@ let idsToPlanets = {}
 planetData.forEach((planet) => {
     idsToPlanets[planet.id] = planet
 });
+console.log(idsToPlanets)
+idsToPlanets[8] = idsToPlanets[1];
 
 let idsToBelts = {}
 beltData.forEach((belt) => {
@@ -244,6 +403,7 @@ return {
     renderer: null,
     testCube: null,
     planets: planetData,
+    pdescriptions: planetDescriptionsArray,
     beltObjects: beltData,
     focusedPlanet: 1,
     cameraDistance: 40,
@@ -370,6 +530,7 @@ methods: {
             return
         }
         this.focusedPlanet = id
+        console.log(id)
         this.selectedPlanetInfo = BLANK_PLANET_DESCRIPTION
         this.isTyping = false
         setTimeout(() => {
@@ -389,7 +550,7 @@ methods: {
         const lerpAmount = LERPSPEED * deltaTime;
         //const lerpAmount = 1;
 
-        if (this.focusedPlanet == 1){ // Aine
+        if (this.focusedPlanet == 1 || this.focusedPlanet == 8){ // Aine or Belt
             this.cameraDistance = lerp(this.cameraDistance, 60, lerpAmount)
         } else {
             this.cameraDistance = lerp(this.cameraDistance, 20, lerpAmount)
@@ -444,9 +605,10 @@ height: 100%;
 }
 
 .map-overlay h1 {
-font-size: 72px;
+font-size: 32px;
 font-family: 'Dune Rise';
 margin-bottom: 10px;
+max-inline-size: 50vh;
 }
 
 .map-overlay-content {
@@ -491,21 +653,20 @@ margin: 0 auto;
 backdrop-filter: blur(2px);
 background-color: #f4f4f445;
 padding: 10px;
-
+white-space: pre-wrap;
 
 }
 
-.planet-description-content :hover {
-    background-color: rgba(0, 0, 0, 0.1);
-}
 
-
-.planet-description-content p{
+.planet-description-description{
 
 text-wrap: wrap;
 max-inline-size: 40vh;
-
+font-family: 'Consolas';
+white-space: pre-wrap;
 }
+
+
 
 .planet-description-content hr{
 color: #8f102b;
