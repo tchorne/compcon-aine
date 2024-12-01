@@ -1,3 +1,6 @@
-docker build . -t my-app
-docker run -d -p 8080:2434 my-app
+docker build . -t compcon-aine
+docker run -d -p 2434:2434 compcon-aine
 curl localhost:2434
+
+
+remember  to use the above docker build, not yarn build
