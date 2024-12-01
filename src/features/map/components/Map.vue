@@ -379,7 +379,7 @@ let idsToPlanets = {}
 planetData.forEach((planet) => {
     idsToPlanets[planet.id] = planet
 });
-console.log(idsToPlanets)
+
 idsToPlanets[8] = idsToPlanets[1];
 
 let idsToBelts = {}
@@ -395,6 +395,12 @@ components: {
     Planet,
     TerminalButton,
     AsteroidGroup,
+},
+props: {
+    planetName: {
+        type: String,
+        required: true,
+    }
 },
 data() {
 return {
@@ -419,6 +425,26 @@ mounted() {
     //this.addTestCube()
     this.animate()
     window.addEventListener('resize', this.onWindowResize)
+    let planetName = this.planetName
+    if (planetName) {
+        planetName = planetName.toLowerCase()
+        const nameRemaps = {
+            "hudsonlilah": "The Hudson-Lilah Belt",
+            "dealatis": "Dea Latis",
+        }
+        if (planetName in nameRemaps){
+            planetName = nameRemaps[planetName]
+            console.log("REMAP", planetName)
+        }
+        planetName = planetName.toLowerCase()
+        for (let id in planetDescriptions){
+            if (planetDescriptions[id].name.toLowerCase() == planetName){
+                console.log("SELECTING ", planetName, id)
+                this.planetSelected(id)
+                break
+            }
+        }
+    }
 },
 beforeDestroy() {
     window.removeEventListener('resize', this.onWindowResize)
@@ -530,7 +556,6 @@ methods: {
             return
         }
         this.focusedPlanet = id
-        console.log(id)
         this.selectedPlanetInfo = BLANK_PLANET_DESCRIPTION
         this.isTyping = false
         setTimeout(() => {
@@ -541,6 +566,7 @@ methods: {
     positionCamera(deltaTime){
         let facingNormal = new THREE.Vector3(0, 65, 40)
         facingNormal = facingNormal.normalize()
+
 
         function lerp(x, y, offset) {
             return x + (y - x) * offset
@@ -560,7 +586,6 @@ methods: {
 
         let planetPos = new THREE.Vector3(planet.position.x, planet.position.y, planet.position.z)
         this.targetPosition = this.targetPosition.lerp(planetPos, lerpAmount) 
-        //console.log(planetPos)
         this.lookpos = this.lookpos.lerp(planetPos, lerpAmount)
 
 

@@ -12,7 +12,7 @@
       >
       THE ÁINE SYSTEM
       </div>
-      <PlanetMap />
+      <planet-map :planetName="planetName"></planet-map>
     </v-container>
     <v-slide-y-reverse-transition mode="out-in">
       <router-view style="width: 100vw; padding-top: 50px" />
@@ -28,6 +28,12 @@ export default Vue.extend({
   name: 'planetmap',
   components: {
     PlanetMap,
+  },
+  props: {
+    planetName: {
+      type: String,
+      default: "",
+    },
   },
   data() {
     return {}
