@@ -39,6 +39,7 @@ import GmsStart from './startup/gms'
 import { getModule } from 'vuex-module-decorators'
 import { UserStore } from '@/store'
 import { UserProfile } from '@/user'
+import { CommandLine } from './coding/commands'
 
 export default Vue.extend({
   name: 'decrypt-log',
@@ -47,6 +48,9 @@ export default Vue.extend({
     text: [],
     lock: false,
   }),
+  props: {
+    commandLine: CommandLine
+  },
   computed: {
     profile(): UserProfile {
       const store = getModule(UserStore, this.$store)
@@ -64,6 +68,8 @@ export default Vue.extend({
   async mounted() {
     this.lock = true
     this.restart()
+
+    console.log(this.commandLine)
   },
   methods: {
     restart() {
@@ -97,8 +103,8 @@ export default Vue.extend({
           break
       }
     },
-    print(user: string, response: string) {
-      if (this.lock) return
+    print(user: string, response: string): Promise<void> {
+      if (this.lock) return Promise.resolve()
       this.lock = true
 
       this.typer.destroy()
@@ -107,45 +113,55 @@ export default Vue.extend({
       if (this.$refs.completed.innerHTML) this.$refs.completed.innerHTML += '<br>'
       this.$refs.completed.innerHTML += this.$refs.output.innerHTML
       this.$refs.output.innerHTML = ''
-
-      this.typer = new TypeIt(this.$refs.output, {
-        speed: 32,
-        lifeLike: true,
-        nextStringDelay: 7,
-        cursor: false,
-        beforeString: () => {
-          this.$refs.output?.scrollIntoView({ block: 'end' })
-          this.$refs.input?.scrollIntoView({ block: 'end' })
-        },
-        afterString: () => {
-          this.$refs.output?.scrollIntoView({ block: 'end' })
-          this.$refs.input?.scrollIntoView({ block: 'end' })
-        },
-        afterComplete: () => {
-          this.lock = false
-        },
+      return new Promise((resolve) => {
+        this.typer = new TypeIt(this.$refs.output, {
+          speed: 32,
+          lifeLike: true,
+          nextStringDelay: 7,
+          cursor: false,
+          beforeString: () => {
+            this.$refs.output?.scrollIntoView({ block: 'end' })
+            this.$refs.input?.scrollIntoView({ block: 'end' })
+          },
+          afterString: () => {
+            this.$refs.output?.scrollIntoView({ block: 'end' })
+            this.$refs.input?.scrollIntoView({ block: 'end' })
+          },
+          afterComplete: () => {
+            this.lock = false
+            resolve()
+          },
+        })
+          //.type(`$ `)
+          //.type(`<span class="stark-text--text">${user}</span>↵`)
+          //.pause(100)
+          //.options({ speed: 3, lifeLike: false })
+          //.break()
+          .type('>')
+          .type(
+            `${response}` // TODO color code
+          )
+          .type(' ')
+          .go()
       })
-        //.type(`$ `)
-        //.type(`<span class="stark-text--text">${user}</span>↵`)
-        //.pause(100)
-        //.options({ speed: 3, lifeLike: false })
-        //.break()
-        .type('>')
-        .type(
-          `${response}` // TODO color code
-        )
-        .type(' ')
-        .go()
     },
     submitInput(e: KeyboardEvent) {
+
       if (e.key === 'Enter') {
         const input = this.$refs.input as HTMLInputElement
         const response = input.value
         if (!response) return
+
         input.value = ''
         this.$emit('submit', response)
-        this.print(this.profile.Username, response)
+        this.commandLine.parseCommand(response).then((results) => {
+          this.print(this.profile.Username, results.formattedString).then(() => {
+            this.print(this.profile.Username, results.resultText)
+          })
+        })
+        
       }
+
     },
   },
 })

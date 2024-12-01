@@ -2,12 +2,12 @@
     <div class="split-screen">
         <v-container style="padding-left: 0px; align-items: start; margin-left: 0px;" class="fill-height no-gutters"> 
             <v-col cols="3" no-gutters class="left-pane"> 
-                <sidebar ref="sidebar" @viewClicked="handleViewClicked"/>
+                <sidebar ref="sidebar" @viewClicked="handleViewClicked" :commandLine="commandLine"/>
             </v-col>
             <v-col cols="2"></v-col>
             <v-col cols="7" no-gutters class="right-pane"> 
                 <decrypt v-if="selectedView==='decrypt'" :commandLine="commandLine"/>
-                <MissionCard v-else-if="selectedView==='mission'" :mission="selectedView==='mission'?selectedItemObject:null"/>
+                <MissionCard v-else-if="selectedView==='mission'" :mission="selectedItemObject"/>
                 <decrypt v-else-if="selectedView==='message'"/>
                 <decrypt v-else-if="selectedView==='log'"/>
                 <decrypt v-else-if="selectedView==='misc'"/>
@@ -29,11 +29,10 @@ import { CommandLine } from '../decrypt/coding/commands';
 
 const HARRISON_LOGO = "/static/img/logo/ha.svg"
 const HARRISON_TAGLINE = "Superior by Design. Harrison Armory leads the way."
-const MISSIONS = [
 
-]
 const SPEARPOINT = {
     id: 1,
+    type: 'mission',
     name: "Operation Spearpoint",
     icon: HARRISON_LOGO,
     availability: "Mission open to all Lancers",
@@ -46,6 +45,9 @@ Support includes additional Lancer teams and full naval reinforcement. The succe
     locationName: "Belisama",
     locationUrl: "belisama"
 }
+const MISSIONS = [
+    SPEARPOINT,
+]
 
 
 //
@@ -66,6 +68,7 @@ export default Vue.extend({
         selectedItemObject: null,
         commandLine: new CommandLine()
     }),
+
     methods: {
         startResize(e: any) {
             console.log('startResize', e)
@@ -92,14 +95,15 @@ export default Vue.extend({
             if (category === 'mission') {
                 this.selectedItemObject = MISSIONS.find(mission => mission.id === itemid)
             }
-
-            //this.$refs.sidebar.setView(view)
         }
     },
     mounted() {
         for (const mission of MISSIONS) {
             this.$refs.sidebar.addItem('mission', mission)
         }
+
+        this.commandLine.exportData(SPEARPOINT)
+
     },
     beforeDestroy() {
     }

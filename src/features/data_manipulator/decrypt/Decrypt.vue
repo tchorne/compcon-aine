@@ -2,11 +2,13 @@
     <div style="height: 100%;">
         <v-container>
             <v-row>
-                <decrypt-log> </decrypt-log>
+                <decrypt-log :commandLine="commandLine"> </decrypt-log>
             </v-row>
             <div style="height: 10vh;"></div>
             <v-row>
-                Data here
+                <div v-for="data in commandLine.loadedData" v-if="data.decrypted==false">
+                    <h1> {{data.visiblekey }}</h1>
+                </div>
             </v-row>
         </v-container>
     </div>
@@ -35,6 +37,7 @@ export default Vue.extend({
             required: true
         }
     },
+
     data() {
         return {
             
