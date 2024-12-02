@@ -51,10 +51,10 @@ const r = new Router({
       ...route,
       path: (route.path = '/gm/' + route.path),
     })),
-    {
-      path: '*',
-      redirect: '/',
-    },
+    // {
+    //   path: '*',
+    //   redirect: '/',
+    // },
   ],
 })
 
@@ -62,7 +62,7 @@ r.beforeEach((to, from, next) => {
   const ns = getModule(NavStore, store)
 
   if (to.path.includes('/compendium')) ns.setNavMode('compendium')
-  else if (to.path.includes('/map')) ns.setNavMode('compendium')
+  else if (to.path.includes('/map') || to.path.includes('/data-manipulator')) ns.setNavMode('compendium')
   else if (to.path.includes('/pilot') || to.path.includes('/active') || to.path.includes('/new'))
     ns.setNavMode('pilot')
   else if (to.path.includes('/gm')) ns.setNavMode('encounter')
