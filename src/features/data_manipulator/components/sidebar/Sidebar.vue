@@ -4,7 +4,7 @@
             <v-btn text x-large class="decrypt-button" @click="() => viewClicked('decrypt', 0)"> DECRYPT </v-btn>
         </v-list-item>
         <v-divider></v-divider>
-        <v-list-item v-for="category in categories" v-if="(category.items || []).length > 0 && commandLine.loadedData.length > 0">
+        <v-list-item v-for="category in categories" v-if="(category.items || []).length > 0">
             <v-list class="no-background">
                 <v-btn text @click="category.open = !category.open">{{ category.name }}</v-btn>
                 <v-list-item v-for="item in category.items" v-if="category.open">
