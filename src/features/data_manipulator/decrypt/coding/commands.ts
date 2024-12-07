@@ -1,3 +1,12 @@
+class ArgumentError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'ArgumentError';
+
+        Object.setPrototypeOf(this, ArgumentError.prototype)
+    }
+}
+
 export class EncodedData {
     visiblekey: string;
     extrakey: string;
@@ -24,7 +33,6 @@ export class EncodedData {
     }
 }
 
-//#endregion
 function encodeToBase64(str: string): string {
     return Buffer.from(str).toString('base64');
 }
@@ -105,6 +113,9 @@ export class CommandLine {
 
         try{
             if (commandName == 'import'){
+                if (args.length != 1){
+                    throw new ArgumentError("Invalid Number of Argumetns")
+                }
                 let data = await this.importData();
                 if (data == null){
                     formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
@@ -122,8 +133,13 @@ export class CommandLine {
                 resultText = "Unknown command: " + commandName;
             }
         } catch (e) {
-            formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
-            resultText = `Error parsing command: ${e.message}`;
+            if (e instanceof ArgumentError) {
+                formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
+                resultText = `Error parsing command: ${e.message}`;
+            } else {
+                throw e;
+            }
+            
         }
         
         return { commandName, args, resultText, formattedString };
@@ -137,9 +153,6 @@ export class CommandLine {
             console.error('Invalid base64 string')
             return null
         }
-
-        // Divide the buffer by MAGIC
-        
 
         const json = JSON.parse(decodeFromBase64(data))
         if (!json) {
@@ -156,12 +169,12 @@ export class CommandLine {
 
     private shift(args: string[]) {
         if (args.length !== 1) {
-            throw new Error('Invalid number of arguments for shift command');
+            throw new ArgumentError('Invalid number of arguments for shift command');
         }
         // Assert the argument is an integer
         const shiftAmount = parseInt(args[0], 10);
         if (isNaN(shiftAmount)) {
-            throw new Error('Invalid shift amount');
+            throw new ArgumentError('Invalid shift amount');
         }
     
         let resultingData: EncodedData[] = [];
