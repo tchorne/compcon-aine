@@ -6,9 +6,13 @@
             </v-row>
             <div style="height: 10vh;"></div>
             <v-row>
-                <div v-for="data in commandLine.loadedData" v-if="data.decrypted==false">
-                    <h1> {{data.visiblekey }}</h1>
-                </div>
+                <decrypt-card 
+                    v-for="data in commandLine.loadedData" 
+                    v-if="data.decrypted==false" 
+                    ref="encryptedCard" 
+                    :data="data" 
+                    @decrypted="onDataDecrypted"
+                /> 
             </v-row>
         </v-container>
     </div>
@@ -17,19 +21,22 @@
 <script lang="ts">
 import Vue from 'vue'
 
-import CCLog from '@/features/main_menu/_components/CCLog.vue';
-import { VContainer, VRow, VCol, VForm, VTextField, VBtn } from 'vuetify/lib';
+import { VContainer, VRow, VCol, VForm, VTextField, VBtn, VCard, VCardTitle } from 'vuetify/lib';
 import DecryptLog from './DecryptLog.vue';
+import DecryptCard from './DecryptCard.vue';
 
-import { CommandLine } from './coding/commands';
+import { CommandLine, EncodedData } from './coding/commands';
 
 export default Vue.extend({
     name: 'decrypt',
     components: {
         DecryptLog,
+        DecryptCard,
         VContainer,
         VRow,
-        VCol
+        VCol,
+        VCard,
+        VCardTitle
     },
     props: {
         commandLine: {
@@ -44,8 +51,27 @@ export default Vue.extend({
         }
     },
     mounted() {
+        this.commandLine.addDataObserver(this.recieveDecryptAttempt)
     },
     methods: {
+        recieveDecryptAttempt(data: EncodedData){
+            console.log("recieved decrypt attempt");
+            this.$refs.encryptedCard.forEach((card) => {
+                console.log("checking", card.data.id, "against", data.id);
+                if(card.data.id == data.id){
+                    card.recieveDecryptAttempt(data);
+                }
+            });
+        },
+        onDataDecrypted(data: EncodedData){
+            // Check if data is already decrypted
+            for (let d2 of this.commandLine.loadedData) {
+                if(d2.id == data.id && d2.decrypted){
+                    return
+                }
+            }
+            this.$emit('newItem', data.realdata)
+        }
     }
 })
 </script>

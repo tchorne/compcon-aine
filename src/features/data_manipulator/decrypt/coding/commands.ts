@@ -1,3 +1,6 @@
+const TESTSTR = `eyJ2aXNpYmxla2V5IjoiVVVVVVVVVVVVVVVVVVVVVVVVVVUiLCJleHRyYWtleSI6IlVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVIiwiYmFzZTY0RGF0YSI6ImV5SnBaQ0k2TWl3aWRIbHdaU0k2SW0xbGMzTmhaMlVpTENKelpXNWtaWElpT2lKYlVFOU1RVkpKVTEwaUxDSnpkV0pxWldOMElqb2lWMlZzWTI5dFpTSXNJbTFsYzNOaFoyVWlPaUpYWld4amIyMWxJSFJ2SUhSb1pTQlFiMnhoY21seklFUmhkR0VnVUdGdVpXd3VJRlJvYVhNZ2FYTWdZU0IzYjNKcklHbHVJSEJ5YjJkeVpYTnpMQ0JoYm1RZ2FYTWdibTkwSUhsbGRDQnlaV0ZrZVNCbWIzSWdkWE5sTGlCUWJHVmhjMlVnWW1VZ2NHRjBhV1Z1ZEN3Z1lXNWtJR05vWldOcklHSmhZMnNnYkdGMFpYSWdabTl5SUhWd1pHRjBaWE11SUZSb1lXNXJJSGx2ZFNCbWIzSWdlVzkxY2lCd1lYUnBaVzVqWlM0aUxDSmhkSFJoWTJodFpXNTBjeUk2SWlJc0lteHZZMkYwYVc5dVRtRnRaU0k2SWlJc0lteHZZMkYwYVc5dVZYSnNJam9pSW4wPSJ9`
+
+
 class ArgumentError extends Error {
     constructor(message: string) {
         super(message);
@@ -13,13 +16,15 @@ export class EncodedData {
     base64Data: string;
     decrypted: boolean;
     realdata: Object;
+    id: number;
 
-    public constructor(visiblekey='', extrakey='', realdata=null, base64Data='', decrypted=false) {
+    public constructor(visiblekey='', extrakey='', realdata=null, base64Data='', decrypted=false, id=0) {
         this.visiblekey = visiblekey;
         this.extrakey = extrakey;
         this.base64Data = base64Data;
         this.realdata = realdata;
         this.decrypted = decrypted;
+        this.id = id;
     }
 
     static copy(data: EncodedData): EncodedData {
@@ -29,6 +34,7 @@ export class EncodedData {
             data.realdata,
             data.base64Data,
             data.decrypted,
+            data.id,
         );
     }
 }
@@ -43,9 +49,11 @@ function decodeFromBase64(str: string): string {
 
 export class CommandLine {
     loadedData: EncodedData[];
+    decryptAttemptObservers: ((data: EncodedData) => void)[] = [];
 
     public constructor() {
         this.loadedData = [];
+        this.decryptAttemptObservers = [];
     }
 
     static isBase64(input: string): boolean {
@@ -70,6 +78,8 @@ export class CommandLine {
         newData.visiblekey = data.visiblekey;
         newData.extrakey = data.extrakey;
         newData.base64Data = data.base64Data;
+        newData.id = data.id;
+
         if (valid){
             newData.realdata = this.decrypt(newData.base64Data);
             newData.decrypted = true;
@@ -80,8 +90,8 @@ export class CommandLine {
     public exportData(data: Object){
         let encodedData = new EncodedData();
         // THIS IS WHERE TO DO THE KEY SHIFTING
-        let visiblekey = 'X'.repeat(20);
-        let extrakey = 'X'.repeat(80);
+        let visiblekey = 'U'.repeat(20);
+        let extrakey = 'U'.repeat(80);
         encodedData.visiblekey = visiblekey;
         encodedData.extrakey = extrakey;
         //
@@ -104,6 +114,16 @@ export class CommandLine {
         return data;
     }
 
+    public addDataObserver(callback: (data: EncodedData) => void) {
+        this.decryptAttemptObservers.push(callback);
+    }
+
+    private addDataIfDecryted(data: EncodedData){
+        if (data.decrypted){
+            this.loadedData.push(data);
+        }
+    }
+
     public async parseCommand(command: string): Promise<Object> {
         const parts = command.split(' ');
         const commandName = parts[0];
@@ -114,18 +134,37 @@ export class CommandLine {
         try{
             if (commandName == 'import'){
                 if (args.length != 1){
-                    throw new ArgumentError("Invalid Number of Argumetns")
+                    throw new ArgumentError("Invalid Number of Arguments for import")
                 }
-                let data = await this.importData();
+                // TEST 
+                if (args[0] == 'test'){
+                    args[0] = TESTSTR;
+                }
+                //
+                let data = await this.importData(args[0]);
+
+                formattedString = "<span class='accent--text'>" + commandName + "</span> " + args[0].slice(0, 15) + "...";
+
                 if (data == null){
-                    formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
                     resultText = "Invalid data";
                 }
                 else{
                     this.loadedData.push(data);
-                    formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
                     resultText = "success";
                 }
+            }
+            else if (commandName == 'shift'){
+                let data = this.shift(args);
+
+                for (const datapoint of data.resultingData){
+                    for  (const observer of this.decryptAttemptObservers) {
+                        console.log('CALLING OBSERVER: ', observer)
+                        observer(datapoint);
+                    }
+                }
+
+                formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
+                resultText = "success";
             }
             else 
             {
@@ -142,27 +181,40 @@ export class CommandLine {
             
         }
         
+        if (formattedString.length > 70){
+            formattedString = formattedString.slice(0, 70) + "...";
+        }
+        if (resultText.length > 70){
+            resultText = resultText.slice(0, 70) + "...";
+        }
+
         return { commandName, args, resultText, formattedString };
     }
 
-    private async importData(): Promise<EncodedData>{
-        const data = await navigator.clipboard.readText();
+    private async importData(data: string): Promise<EncodedData>{
         console.log('DATA: ', data)
 
         if (!CommandLine.isBase64(data)) {
             console.error('Invalid base64 string')
             return null
         }
+        
 
-        const json = JSON.parse(decodeFromBase64(data))
-        if (!json) {
-            return null
+        try {
+            var json = JSON.parse(decodeFromBase64(data))
+            if (!json) {
+                return null
+            }
+        } catch (e) {
+            throw new ArgumentError('Unable to decode import.');
         }
 
         let encodedData = new EncodedData();
         encodedData.visiblekey = json.visiblekey;
         encodedData.extrakey = json.extrakey
         encodedData.base64Data = json.base64Data;
+        encodedData.id = Math.floor(Math.random() * 1000000);
+
 
         return this.copyOrDecrypt(encodedData);
     }
@@ -220,6 +272,7 @@ export class CommandLine {
             newData.visiblekey = shiftedVisibleKey;
             newData.extrakey = shiftedExtraKey;
             newData.base64Data = dataCopy.base64Data;
+            newData.id = dataCopy.id;
 
             resultingData.push(this.copyOrDecrypt(newData));
         }

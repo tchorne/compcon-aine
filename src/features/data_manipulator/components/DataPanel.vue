@@ -6,11 +6,14 @@
             </v-col>
             <v-col cols="2"></v-col>
             <v-col cols="7" no-gutters class="right-pane"> 
-                <decrypt v-if="selectedView==='decrypt'" :commandLine="commandLine"/>
-                <MissionCard v-else-if="selectedView==='mission'" :mission="selectedItemObject"/>
-                <decrypt v-else-if="selectedView==='message'"/>
-                <decrypt v-else-if="selectedView==='log'"/>
-                <decrypt v-else-if="selectedView==='misc'"/>
+                <KeepAlive>
+                    <decrypt v-if="selectedView==='decrypt'" :commandLine="commandLine"
+                        @newItem="newItem"/>
+                    <MissionCard v-else-if="selectedView==='mission'" :mission="selectedItemObject"/>
+                    <MessageCard v-else-if="selectedView==='message'" :message="selectedItemObject"/>
+                    <decrypt v-else-if="selectedView==='log'"/>
+                    <decrypt v-else-if="selectedView==='misc'"/>
+                </KeepAlive>
             </v-col>
         </v-container>
     </div>
@@ -23,14 +26,27 @@ import { VCol, VContainer } from 'vuetify/lib';
 import Sidebar from './sidebar/Sidebar.vue';
 import Decrypt from '../decrypt/Decrypt.vue'; 
 import MissionCard from './datacards/MissionCard.vue';
+import MessageCard from './datacards/MessageCard.vue';
 import { CommandLine } from '../decrypt/coding/commands';
 
+import { MissionType, MessageType } from '../datatypes';
 // TEMPORARY : fixed data
 
 const HARRISON_LOGO = "/static/img/logo/ha.svg"
 const HARRISON_TAGLINE = "Superior by Design. Harrison Armory leads the way."
 
-const SPEARPOINT = {
+const WELCOME : MessageType = {
+    id: 2,
+    type: 'message',
+    sender: '[POLARIS]',
+    subject: 'Welcome',
+    message: `Welcome to the Polaris Data Panel. This is a work in progress, and is not yet ready for use. Please be patient, and check back later for updates. Thank you for your patience.`,
+    attachments: "",
+    locationName: "",
+    locationUrl: "",
+}
+
+const SPEARPOINT : MissionType = {
     id: 1,
     type: 'mission',
     name: "Operation Spearpoint",
@@ -45,6 +61,8 @@ Support includes additional Lancer teams and full naval reinforcement. The succe
     locationName: "Belisama",
     locationUrl: "belisama"
 }
+
+
 const MISSIONS = [
     SPEARPOINT,
 ]
@@ -58,6 +76,7 @@ export default Vue.extend({
         Sidebar,
         Decrypt,
         MissionCard,
+        MessageCard,
         VContainer,
         VCol,
     },
@@ -89,20 +108,19 @@ export default Vue.extend({
             document.removeEventListener('mousemove', this.onResize)
             document.removeEventListener('mouseup', this.stopResize)
         },
-        handleViewClicked(category: string, itemid: number) {
-            console.log('handleViewClicked', itemid)
+        handleViewClicked(category: string, item: any) {
+            console.log('handleViewClicked', item)
             this.selectedView = category
-            if (category === 'mission') {
-                this.selectedItemObject = MISSIONS.find(mission => mission.id === itemid)
-            }
+            this.selectedItemObject = item;
+        },
+        newItem(item: any) {
+            this.$refs.sidebar.addItem(item.type, item)
         }
     },
     mounted() {
-        for (const mission of MISSIONS) {
-            this.$refs.sidebar.addItem('mission', mission)
-        }
+        this.$refs.sidebar.addItem('mission', SPEARPOINT)
 
-        this.commandLine.exportData(SPEARPOINT)
+        this.commandLine.exportData(WELCOME)
 
     },
     beforeDestroy() {

@@ -1,26 +1,28 @@
 <template>
     <div class="mission-content">
-        <div class="top-row"><img :src="mission.icon" class="mission-icon"/> <h1 class="typewriter">  {{ mission.name }}</h1></div>
+        <div class="top-row"> <h1 class="typewriter">  {{ message.subject }}</h1></div>
 
         <v-divider></v-divider>
 
         <header class="skewed-header">
-            <h2> {{ mission.availability.toUpperCase() }}</h2>
+            <h2> {{ message.sender.toUpperCase() }}</h2>
             <div class="scrolling-underline"></div>
         </header>
 
         <v-divider></v-divider>
         <br>
 
-        <vue-markdown>{{ mission.description }}</vue-markdown>
+        <vue-markdown>{{ message.message }}</vue-markdown>
         <br>
-        <blockquote> {{ mission.tagline }}</blockquote>
+        <blockquote v-if="message.attachments != ''"> {{ message.attachments}} </blockquote>
         <br>
         <v-divider></v-divider>
         <div style="layout"> </div>
         <br>
-        <h3>Location</h3>
-        <v-btn :style="{color: 'primary'}" :href="'/#/map/' +  mission.locationUrl ">{{ mission.locationName }} >></v-btn>
+        <div v-if="message.locationName != ''">
+            <h3>Location</h3>
+            <v-btn :style="{color: 'primary'}" :href="'/#/map/' +  message.locationUrl ">{{ message.locationName }} >></v-btn>
+        </div>
 
     </div>
   </template>
@@ -31,13 +33,12 @@ import Vue from 'vue'
 import { VDivider } from 'vuetify/lib/components'
 import { VBtn } from 'vuetify/lib/components'
 import VueMarkdown from 'vue-markdown'
-import { mission } from '@/io/Generators';
-import { MissionType } from '../../datatypes';
+import { MessageType } from '../../datatypes';
 
 export default Vue.extend({
     name: 'mission-card',
     props: {
-        mission: Object
+        message: Object
     },
     components: {
         VDivider,
