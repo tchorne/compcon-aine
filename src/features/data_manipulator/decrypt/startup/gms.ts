@@ -23,7 +23,7 @@ const plog = typer => {
     .type('No sensory bridge found // manual input mode enabled')
     .break()
     .type(
-      '>//[<span class="accent--text">COMP/CON</span>: <span class="stark-text--text">Welcome, Lancer. Input Command.</span>]'
+      `>//[<span class="accent--text">COMP/CON</span>: <span class="stark-text--text">Welcome, Lancer. Type </span><span class="accent--text">'help'</span><span class="stark-text--text"> for a list of commands.</span>]`
     )
     .go()
 }

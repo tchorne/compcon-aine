@@ -191,6 +191,8 @@ export class CommandLine {
         const args = parts.slice(1);
         let formattedString = "";
         let resultText = "";
+        
+        let longResult = false
 
         const commandMap = {
             'shift': (args: string[]) => this.shift(args),
@@ -235,6 +237,19 @@ export class CommandLine {
                 formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
                 resultText = `Function applied. ${numDecrypted} message${numDecrypted==1?"":"s"} decrypted.`;
             }
+            else if (commandName == 'help') {
+                longResult = true
+                formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
+                resultText = `Available commands: import, shift, vigi, help 
+                <br>import: import data from base64 string
+                <br>....usage: import [data]
+                <br>shift: shift data by a number of characters (caesar cipher)
+                <br>....usage: shift [shiftamount]
+                <br>vigi: apply viginere cipher to data
+                <br>....usage: vigi [viginerekey]
+                <br>help : show this help message
+                `;
+            }
             else 
             {
                 formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
@@ -254,7 +269,7 @@ export class CommandLine {
         if (formattedString.length > 70){
             formattedString = formattedString.slice(0, 70) + "...";
         }
-        if (resultText.length > 70){
+        if (resultText.length > 70 && !longResult){
             resultText = resultText.slice(0, 70) + "...";
         }
 
