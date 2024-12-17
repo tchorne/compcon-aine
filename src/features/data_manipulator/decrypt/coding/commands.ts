@@ -47,6 +47,63 @@ function decodeFromBase64(str: string): string {
     return Buffer.from(str, 'base64').toString('utf-8');
 }
 
+
+//#region Viginere
+function generateViginereKey(str: string, key: string): string {
+    let x = str.length;
+    let newKey = "";
+
+    for (let i = 0; i < x; i++) {
+        newKey += key[i % key.length]
+    }
+    return newKey;
+}
+
+function encryptViginere(str: string, key: string): string {
+    let cipher_text = "";
+
+    str = str.toUpperCase();
+    key = key.toUpperCase();
+
+    key = generateViginereKey(str, key);
+
+    for (let i = 0; i < str.length; i++) {
+        let x = (str[i].charCodeAt(0) + key[i].charCodeAt(0)) % 26;
+        x += 'A'.charCodeAt(0);
+        cipher_text += String.fromCharCode(x);
+    }
+
+    return cipher_text;
+}
+
+function decryptViginere(cipher_text: string, key: string): string {
+    let orig_text = "";
+
+    cipher_text = cipher_text.toUpperCase();
+    key = key.toUpperCase();
+
+    key = generateViginereKey(cipher_text, key);
+
+    for (let i = 0; i < cipher_text.length; i++) {
+        let x = (cipher_text[i].charCodeAt(0) - key[i].charCodeAt(0) + 26) % 26;
+        x += 'A'.charCodeAt(0);
+        orig_text += String.fromCharCode(x);
+    }
+
+    return orig_text;
+}
+
+// let teststring = "FLYMETOTHEMOONLETMEPLAYAMONGTHESTARS"
+// let key = "TOTHEMOON"
+// let encrypted = encryptViginere(teststring, key)
+// let decrypted = decryptViginere(encrypted, key)
+// console.log(encrypted)
+// console.log(decrypted)
+//#endregion
+
+
+
+
 export class CommandLine {
     loadedData: EncodedData[];
     decryptAttemptObservers: ((data: EncodedData) => void)[] = [];
@@ -90,8 +147,12 @@ export class CommandLine {
     public exportData(data: Object){
         let encodedData = new EncodedData();
         // THIS IS WHERE TO DO THE KEY SHIFTING
-        let visiblekey = 'U'.repeat(20);
-        let extrakey = 'U'.repeat(80);
+        let visiblekey = 'X'.repeat(20);
+        let extrakey = 'X'.repeat(80);
+        let decryptionKey = "AETHERITE"
+        visiblekey = encryptViginere(visiblekey, decryptionKey)
+        extrakey = encryptViginere(extrakey, decryptionKey)
+        
         encodedData.visiblekey = visiblekey;
         encodedData.extrakey = extrakey;
         //
@@ -131,6 +192,11 @@ export class CommandLine {
         let formattedString = "";
         let resultText = "";
 
+        const commandMap = {
+            'shift': (args: string[]) => this.shift(args),
+            'vigi': (args: string[]) => this.viginere(args)
+        };
+
         try{
             if (commandName == 'import'){
                 if (args.length != 1){
@@ -153,24 +219,28 @@ export class CommandLine {
                     resultText = "success";
                 }
             }
-            else if (commandName == 'shift'){
-                let data = this.shift(args);
+            else if (commandMap.hasOwnProperty(commandName)) {
+                let data = commandMap[commandName](args);
+                
+                let numDecrypted = 0
 
-                for (const datapoint of data.resultingData){
-                    for  (const observer of this.decryptAttemptObservers) {
+                for (const datapoint of data.resultingData) {
+                    for (const observer of this.decryptAttemptObservers) {
                         console.log('CALLING OBSERVER: ', observer)
                         observer(datapoint);
                     }
+                    if (datapoint.decrypted) numDecrypted++;
                 }
 
                 formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
-                resultText = "success";
+                resultText = `Function applied. ${numDecrypted} message${numDecrypted==1?"":"s"} decrypted.`;
             }
             else 
             {
                 formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
                 resultText = "Unknown command: " + commandName;
             }
+            
         } catch (e) {
             if (e instanceof ArgumentError) {
                 formattedString = "<span class='accent--text'>" + commandName + "</span> " + args.join(" ");
@@ -219,7 +289,24 @@ export class CommandLine {
         return this.copyOrDecrypt(encodedData);
     }
 
+
+    private useFunctionOnDataCopy(data: EncodedData, func: (key: string) => string): EncodedData {
+        let dataCopy = EncodedData.copy(data);
+        
+        let modifiedVisibleKey = func(dataCopy.visiblekey)
+        let modifiedExtraKey = func(dataCopy.extrakey)
+
+        let newData = new EncodedData();
+        newData.visiblekey = modifiedVisibleKey;
+        newData.extrakey = modifiedExtraKey;
+        newData.base64Data = dataCopy.base64Data;
+        newData.id = dataCopy.id;
+
+        return this.copyOrDecrypt(newData);
+    }
+
     private shift(args: string[]) {
+        // Step 1. Check arguments
         if (args.length !== 1) {
             throw new ArgumentError('Invalid number of arguments for shift command');
         }
@@ -228,59 +315,78 @@ export class CommandLine {
         if (isNaN(shiftAmount)) {
             throw new ArgumentError('Invalid shift amount');
         }
-    
+        
+        // Step 2. Define Helpers
+
+        function shiftChar(c: string){
+            let code = c.charCodeAt(0);
+            if (code <= 'Z'.charCodeAt(0) && code >= 'A'.charCodeAt(0)){
+                code += shiftAmount;
+                if (code > 'Z'.charCodeAt(0)){
+                    code -= 26;
+                }
+                if (code < 'A'.charCodeAt(0)){
+                    code += 26;
+                }
+            }
+            else if (code <= '9'.charCodeAt(0) && code >= '0'.charCodeAt(0)){
+                code += shiftAmount;
+                if (code > '9'.charCodeAt(0)){
+                    code -= 10;
+                }
+                if (code < '0'.charCodeAt(0)){
+                    code += 10;
+                }
+            }
+            return String.fromCharCode(code);
+        }
+
+        function shiftString(s: string){
+            s = s.toUpperCase();
+            let result = '';
+            for (let i = 0; i < s.length; i++){
+                result += shiftChar(s[i]);
+            }
+            return result;
+        }
+
+        // Step 3. Apply to Data
         let resultingData: EncodedData[] = [];
-    
+
         for (const data of this.loadedData) {
-            let dataCopy = EncodedData.copy(data);
-            function shiftChar(c: string){
-                let code = c.charCodeAt(0);
-                if (code <= 'Z'.charCodeAt(0) && code >= 'A'.charCodeAt(0)){
-                    code += shiftAmount;
-                    if (code > 'Z'.charCodeAt(0)){
-                        code -= 26;
-                    }
-                    if (code < 'A'.charCodeAt(0)){
-                        code += 26;
-                    }
-                }
-                else if (code <= '9'.charCodeAt(0) && code >= '0'.charCodeAt(0)){
-                    code += shiftAmount;
-                    if (code > '9'.charCodeAt(0)){
-                        code -= 10;
-                    }
-                    if (code < '0'.charCodeAt(0)){
-                        code += 10;
-                    }
-                }
-                return String.fromCharCode(code);
-            }
-    
-            function shiftString(s: string){
-                s = s.toUpperCase();
-                let result = '';
-                for (let i = 0; i < s.length; i++){
-                    result += shiftChar(s[i]);
-                }
-                return result;
-            }
-            
-            let shiftedVisibleKey = shiftString(dataCopy.visiblekey)
-            let shiftedExtraKey = shiftString(dataCopy.extrakey)
-
-            let newData = new EncodedData();
-            newData.visiblekey = shiftedVisibleKey;
-            newData.extrakey = shiftedExtraKey;
-            newData.base64Data = dataCopy.base64Data;
-            newData.id = dataCopy.id;
-
-            resultingData.push(this.copyOrDecrypt(newData));
+            resultingData.push(this.useFunctionOnDataCopy(data, shiftString));
         }
     
         return { resultingData }
     }
 
+    private viginere(args: string[]){
+        // Step 1. Check Arguments
+        if (args.length !== 1) {
+            throw new ArgumentError('Invalid number of arguments for viginere command');
+        }
+        // Check the key is alphabetic
+        if (!/^[a-zA-Z]+$/.test(args[0])) {
+            throw new ArgumentError('Viginere key must only contain letters A-Z');
+        }
 
+        let key = args[0];
+        
+        // Step 2. Define helpers
+
+        let decode = (str: string) => {
+            return decryptViginere(str, key);
+        }
+
+        // Step 3. Apply to Data
+        let resultingData: EncodedData[] = [];
+        
+        for (const data of this.loadedData) {
+            resultingData.push(this.useFunctionOnDataCopy(data, decode));
+        }
+
+        return { resultingData }
+    }
 }
 
 

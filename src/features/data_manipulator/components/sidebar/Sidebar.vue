@@ -9,7 +9,7 @@
                 <v-btn text @click="category.open = !category.open">{{ category.name }}</v-btn>
                 <v-list-item v-for="item in category.items" v-if="category.open">
                     <v-btn text @click="()=>viewClicked(category.id, item)">
-                        {{ item.name || item.subject }}
+                        {{ item.name || item.subject || item.title }}
                     </v-btn>
                 </v-list-item>
             </v-list>

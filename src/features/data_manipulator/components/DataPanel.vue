@@ -11,7 +11,7 @@
                         @newItem="newItem"/>
                     <MissionCard v-else-if="selectedView==='mission'" :mission="selectedItemObject"/>
                     <MessageCard v-else-if="selectedView==='message'" :message="selectedItemObject"/>
-                    <decrypt v-else-if="selectedView==='log'"/>
+                    <LogCard v-else-if="selectedView==='log'" :log="selectedItemObject"/>
                     <decrypt v-else-if="selectedView==='misc'"/>
                 </KeepAlive>
             </v-col>
@@ -27,15 +27,16 @@ import Sidebar from './sidebar/Sidebar.vue';
 import Decrypt from '../decrypt/Decrypt.vue'; 
 import MissionCard from './datacards/MissionCard.vue';
 import MessageCard from './datacards/MessageCard.vue';
+import LogCard from './datacards/LogCard.vue';
 import { CommandLine } from '../decrypt/coding/commands';
 
-import { MissionType, MessageType } from '../datatypes';
+import { MissionType, MessageType, LogType } from '../datatypes';
 // TEMPORARY : fixed data
 
 const HARRISON_LOGO = "/static/img/logo/ha.svg"
 const HARRISON_TAGLINE = "Superior by Design. Harrison Armory leads the way."
 
-const WELCOME : MessageType = {
+const NEW_MESSAGE : MessageType = {
     id: 2,
     type: 'message',
     sender: '[POLARIS]',
@@ -62,9 +63,30 @@ Support includes additional Lancer teams and full naval reinforcement. The succe
     locationUrl: "belisama"
 }
 
+const NEW_MISSION : MissionType = {
+    id: 1,
+    type: 'mission',
+    name: "",
+    icon: HARRISON_LOGO,
+    availability: "",
+    description: ``,
+    tagline: HARRISON_TAGLINE,
+    locationName: "",
+    locationUrl: ""
+}
+
+const NEW_LOG : LogType = {
+    id: 3,
+    type: 'log',
+    title: '',
+    date: '',
+    message: ``,
+    attachments: ''
+}
 
 const MISSIONS = [
     SPEARPOINT,
+    NEW_LOG
 ]
 
 
@@ -77,6 +99,7 @@ export default Vue.extend({
         Decrypt,
         MissionCard,
         MessageCard,
+        LogCard,
         VContainer,
         VCol,
     },
@@ -119,8 +142,8 @@ export default Vue.extend({
     },
     mounted() {
         this.$refs.sidebar.addItem('mission', SPEARPOINT)
-
-        this.commandLine.exportData(WELCOME)
+        //this.$refs.sidebar.addItem('log', NEW_LOG)
+        this.commandLine.exportData(NEW_LOG)
 
     },
     beforeDestroy() {

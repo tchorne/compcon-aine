@@ -25,9 +25,9 @@ export type LogType = {
     id: number,
     type: 'log',
     title: string,
-    date: string,
+    date: string | undefined,
     message: string,
-    attachments: string,
+    attachments: string | undefined,
 }
 
 export type MiscType = {
