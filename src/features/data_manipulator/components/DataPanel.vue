@@ -75,18 +75,10 @@ const NEW_MISSION : MissionType = {
     locationUrl: ""
 }
 
-const NEW_LOG : LogType = {
-    id: 3,
-    type: 'log',
-    title: '',
-    date: '',
-    message: ``,
-    attachments: ''
-}
+
 
 const MISSIONS = [
     SPEARPOINT,
-    NEW_LOG
 ]
 
 
@@ -143,7 +135,7 @@ export default Vue.extend({
     mounted() {
         this.$refs.sidebar.addItem('mission', SPEARPOINT)
         //this.$refs.sidebar.addItem('log', NEW_LOG)
-        this.commandLine.exportData(NEW_LOG)
+        //this.commandLine.exportData(NEW_LOG)
 
     },
     beforeDestroy() {

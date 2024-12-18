@@ -1,3 +1,5 @@
+import { LogType } from "../../datatypes";
+
 const TESTSTR = `eyJ2aXNpYmxla2V5IjoiVVVVVVVVVVVVVVVVVVVVVVVVVVUiLCJleHRyYWtleSI6IlVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVIiwiYmFzZTY0RGF0YSI6ImV5SnBaQ0k2TWl3aWRIbHdaU0k2SW0xbGMzTmhaMlVpTENKelpXNWtaWElpT2lKYlVFOU1RVkpKVTEwaUxDSnpkV0pxWldOMElqb2lWMlZzWTI5dFpTSXNJbTFsYzNOaFoyVWlPaUpYWld4amIyMWxJSFJ2SUhSb1pTQlFiMnhoY21seklFUmhkR0VnVUdGdVpXd3VJRlJvYVhNZ2FYTWdZU0IzYjNKcklHbHVJSEJ5YjJkeVpYTnpMQ0JoYm1RZ2FYTWdibTkwSUhsbGRDQnlaV0ZrZVNCbWIzSWdkWE5sTGlCUWJHVmhjMlVnWW1VZ2NHRjBhV1Z1ZEN3Z1lXNWtJR05vWldOcklHSmhZMnNnYkdGMFpYSWdabTl5SUhWd1pHRjBaWE11SUZSb1lXNXJJSGx2ZFNCbWIzSWdlVzkxY2lCd1lYUnBaVzVqWlM0aUxDSmhkSFJoWTJodFpXNTBjeUk2SWlJc0lteHZZMkYwYVc5dVRtRnRaU0k2SWlJc0lteHZZMkYwYVc5dVZYSnNJam9pSW4wPSJ9`
 
 
@@ -13,14 +15,18 @@ class ArgumentError extends Error {
 export class EncodedData {
     visiblekey: string;
     extrakey: string;
+    requiredVisibleKey: string;
+    requiredExtraKey: string;
     base64Data: string;
     decrypted: boolean;
     realdata: Object;
     id: number;
 
-    public constructor(visiblekey='', extrakey='', realdata=null, base64Data='', decrypted=false, id=0) {
+    public constructor(visiblekey='', extrakey='', requiredVisibleKey='', requiredExtraKey = '', realdata=null, base64Data='', decrypted=false, id=0) {
         this.visiblekey = visiblekey;
         this.extrakey = extrakey;
+        this.requiredVisibleKey = requiredVisibleKey;
+        this.requiredExtraKey = requiredExtraKey;
         this.base64Data = base64Data;
         this.realdata = realdata;
         this.decrypted = decrypted;
@@ -31,6 +37,8 @@ export class EncodedData {
         return new EncodedData(
             data.visiblekey,
             data.extrakey,
+            data.requiredVisibleKey,
+            data.requiredExtraKey,
             data.realdata,
             data.base64Data,
             data.decrypted,
@@ -47,6 +55,46 @@ function decodeFromBase64(str: string): string {
     return Buffer.from(str, 'base64').toString('utf-8');
 }
 
+function mod(n, m) {
+    return ((n % m) + m) % m;
+}
+
+//#region RNG
+function RNG(seed) {
+    // LCG using GCC's constants
+    this.m = 0x80000000; // 2**31;
+    this.a = 1103515245;
+    this.c = 12345;
+  
+    this.state = seed ? seed : Math.floor(Math.random() * (this.m - 1));
+  }
+  RNG.prototype.nextInt = function() {
+    this.state = (this.a * this.state + this.c) % this.m;
+    return this.state;
+  }
+  RNG.prototype.nextFloat = function() {
+    // returns in range [0,1]
+    return this.nextInt() / (this.m - 1);
+  }
+  RNG.prototype.nextRange = function(start, end) {
+    // returns in range [start, end): including start, excluding end
+    // can't modulu nextInt because of weak randomness in lower bits
+    var rangeSize = end - start;
+    var randomUnder1 = this.nextInt() / this.m;
+    return start + Math.floor(randomUnder1 * rangeSize);
+  }
+  RNG.prototype.choice = function(array) {
+    return array[this.nextRange(0, array.length)];
+  }
+  RNG.prototype.nextString = function(length, chars) {
+    var chars = chars || "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var str = "";
+    for (var i = 0; i < length; i++) {
+      str += this.choice(chars);
+    }
+    return str;
+  }
+//#endregion  
 
 //#region Viginere
 function generateViginereKey(str: string, key: string): string {
@@ -68,7 +116,7 @@ function encryptViginere(str: string, key: string): string {
     key = generateViginereKey(str, key);
 
     for (let i = 0; i < str.length; i++) {
-        let x = (str[i].charCodeAt(0) + key[i].charCodeAt(0)) % 26;
+        let x = mod(str[i].charCodeAt(0) + key[i].charCodeAt(0), 26);
         x += 'A'.charCodeAt(0);
         cipher_text += String.fromCharCode(x);
     }
@@ -85,7 +133,7 @@ function decryptViginere(cipher_text: string, key: string): string {
     key = generateViginereKey(cipher_text, key);
 
     for (let i = 0; i < cipher_text.length; i++) {
-        let x = (cipher_text[i].charCodeAt(0) - key[i].charCodeAt(0) + 26) % 26;
+        let x = mod(cipher_text[i].charCodeAt(0) - key[i].charCodeAt(0) + 26, 26);
         x += 'A'.charCodeAt(0);
         orig_text += String.fromCharCode(x);
     }
@@ -103,6 +151,49 @@ function decryptViginere(cipher_text: string, key: string): string {
 
 
 
+//#region Export
+function exportData(data: LogType, decryptionKey: string){
+    let encodedData = new EncodedData();
+    let rng = new RNG(data.id)
+    // THIS IS WHERE TO DO THE KEY SHIFTING
+    let requiredVisibleKey = rng.nextString(20);
+    let requiredExtraKey = rng.nextString(80);
+
+    let visiblekey = encryptViginere(requiredVisibleKey, decryptionKey)
+    let extrakey = encryptViginere(requiredExtraKey, decryptionKey)
+    
+    encodedData.visiblekey = visiblekey;
+    encodedData.extrakey = extrakey;
+    encodedData.requiredVisibleKey = requiredVisibleKey;
+    encodedData.requiredExtraKey = requiredExtraKey;
+    //
+
+    let innerJson = encodeToBase64(JSON.stringify(data));
+    let json = {
+        visiblekey: encodedData.visiblekey,
+        extrakey: encodedData.extrakey,
+        requiredVisibleKey: encodedData.requiredVisibleKey,
+        requiredExtraKey: encodedData.requiredExtraKey,
+        base64Data: innerJson
+    }
+
+    let str = JSON.stringify(json)
+    let base64 = encodeToBase64(str);
+
+    console.log("EXPORTED DATA: ", base64)
+}
+
+const NEW_LOG : LogType = {
+    id: 7,
+    type: 'log',
+    title: '',
+    date: '',
+    message: ``,
+    attachments: ''
+}
+
+exportData(NEW_LOG, "")
+//#endregion
 
 export class CommandLine {
     loadedData: EncodedData[];
@@ -129,11 +220,12 @@ export class CommandLine {
 
     private copyOrDecrypt(data: EncodedData): EncodedData {
         if (data.decrypted) return data;
-        let valid = (data.visiblekey === "X".repeat(data.visiblekey.length)) && (data.extrakey === "X".repeat(data.extrakey.length))
-            
+        let valid = (data.visiblekey === data.requiredVisibleKey) && (data.extrakey === data.requiredExtraKey)
         let newData = new EncodedData();
         newData.visiblekey = data.visiblekey;
         newData.extrakey = data.extrakey;
+        newData.requiredVisibleKey = data.requiredVisibleKey;
+        newData.requiredExtraKey = data.requiredExtraKey;
         newData.base64Data = data.base64Data;
         newData.id = data.id;
 
@@ -144,31 +236,7 @@ export class CommandLine {
         return newData
     }
 
-    public exportData(data: Object){
-        let encodedData = new EncodedData();
-        // THIS IS WHERE TO DO THE KEY SHIFTING
-        let visiblekey = 'X'.repeat(20);
-        let extrakey = 'X'.repeat(80);
-        let decryptionKey = "AETHERITE"
-        visiblekey = encryptViginere(visiblekey, decryptionKey)
-        extrakey = encryptViginere(extrakey, decryptionKey)
-        
-        encodedData.visiblekey = visiblekey;
-        encodedData.extrakey = extrakey;
-        //
-
-        let innerJson = encodeToBase64(JSON.stringify(data));
-        let json = {
-            visiblekey: encodedData.visiblekey,
-            extrakey: encodedData.extrakey,
-            base64Data: innerJson
-        }
-
-        let str = JSON.stringify(json)
-        let base64 = encodeToBase64(str);
-
-        console.log("EXPORTED DATA: ", base64)
-    }
+    
 
     private decrypt(inner: string){
         let data = JSON.parse(decodeFromBase64(inner));
@@ -298,6 +366,13 @@ export class CommandLine {
         encodedData.visiblekey = json.visiblekey;
         encodedData.extrakey = json.extrakey
         encodedData.base64Data = json.base64Data;
+        encodedData.requiredVisibleKey = json.requiredVisibleKey || "X".repeat(80);
+        encodedData.requiredExtraKey = json.requiredExtraKey || "X".repeat(80);
+        if (encodedData.requiredVisibleKey.length != 20 || encodedData.requiredExtraKey.length != 80){
+            encodedData.requiredVisibleKey = "X".repeat(20);
+            encodedData.requiredExtraKey = "X".repeat(80);
+        }
+
         encodedData.id = Math.floor(Math.random() * 1000000);
 
 
@@ -315,6 +390,8 @@ export class CommandLine {
         newData.visiblekey = modifiedVisibleKey;
         newData.extrakey = modifiedExtraKey;
         newData.base64Data = dataCopy.base64Data;
+        newData.requiredVisibleKey = dataCopy.requiredVisibleKey;
+        newData.requiredExtraKey = dataCopy.requiredExtraKey;
         newData.id = dataCopy.id;
 
         return this.copyOrDecrypt(newData);
