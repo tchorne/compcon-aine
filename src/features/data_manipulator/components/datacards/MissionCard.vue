@@ -12,7 +12,7 @@
         <v-divider></v-divider>
         <br>
 
-        <vue-markdown>{{ mission.description }}</vue-markdown>
+        <vue-markdown :source='mission.description'></vue-markdown>
         <br>
         <blockquote> {{ mission.tagline }}</blockquote>
         <br>

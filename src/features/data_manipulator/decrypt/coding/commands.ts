@@ -1,4 +1,4 @@
-import { LogType } from "../../datatypes";
+import { LogType, MissionType } from "../../datatypes";
 
 const TESTSTR = `eyJ2aXNpYmxla2V5IjoiVVVVVVVVVVVVVVVVVVVVVVVVVVUiLCJleHRyYWtleSI6IlVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVIiwiYmFzZTY0RGF0YSI6ImV5SnBaQ0k2TWl3aWRIbHdaU0k2SW0xbGMzTmhaMlVpTENKelpXNWtaWElpT2lKYlVFOU1RVkpKVTEwaUxDSnpkV0pxWldOMElqb2lWMlZzWTI5dFpTSXNJbTFsYzNOaFoyVWlPaUpYWld4amIyMWxJSFJ2SUhSb1pTQlFiMnhoY21seklFUmhkR0VnVUdGdVpXd3VJRlJvYVhNZ2FYTWdZU0IzYjNKcklHbHVJSEJ5YjJkeVpYTnpMQ0JoYm1RZ2FYTWdibTkwSUhsbGRDQnlaV0ZrZVNCbWIzSWdkWE5sTGlCUWJHVmhjMlVnWW1VZ2NHRjBhV1Z1ZEN3Z1lXNWtJR05vWldOcklHSmhZMnNnYkdGMFpYSWdabTl5SUhWd1pHRjBaWE11SUZSb1lXNXJJSGx2ZFNCbWIzSWdlVzkxY2lCd1lYUnBaVzVqWlM0aUxDSmhkSFJoWTJodFpXNTBjeUk2SWlJc0lteHZZMkYwYVc5dVRtRnRaU0k2SWlJc0lteHZZMkYwYVc5dVZYSnNJam9pSW4wPSJ9`
 
@@ -96,6 +96,48 @@ function RNG(seed) {
   }
 //#endregion  
 
+//#region Caesar
+function shiftChar(c: string, shiftAmount: number){
+    let code = c.charCodeAt(0);
+    if (code <= 'Z'.charCodeAt(0) && code >= 'A'.charCodeAt(0)){
+        code += shiftAmount;
+        if (code > 'Z'.charCodeAt(0)){
+            code -= 26;
+        }
+        if (code < 'A'.charCodeAt(0)){
+            code += 26;
+        }
+    }
+    else if (code <= '9'.charCodeAt(0) && code >= '0'.charCodeAt(0)){
+        code += shiftAmount;
+        if (code > '9'.charCodeAt(0)){
+            code -= 10;
+        }
+        if (code < '0'.charCodeAt(0)){
+            code += 10;
+        }
+    }
+    return String.fromCharCode(code);
+}
+
+function shiftString(s: string, shiftAmount: number){
+    s = s.toUpperCase();
+    let result = '';
+    for (let i = 0; i < s.length; i++){
+        result += shiftChar(s[i], shiftAmount);
+    }
+    return result;
+}
+
+function encryptCaesar(s: string, shiftAmount: number): string{
+    return shiftString(s, shiftAmount)
+}
+
+function decryptCaesar(s: string, shiftAmount: number): string{
+    return shiftString(s, -shiftAmount);
+}
+//#endregion
+
 //#region Viginere
 function generateViginereKey(str: string, key: string): string {
     let x = str.length;
@@ -152,15 +194,17 @@ function decryptViginere(cipher_text: string, key: string): string {
 
 
 //#region Export
-function exportData(data: LogType, decryptionKey: string){
+function exportData(data: MissionType, decryptionKey: number){
     let encodedData = new EncodedData();
     let rng = new RNG(data.id)
     // THIS IS WHERE TO DO THE KEY SHIFTING
     let requiredVisibleKey = rng.nextString(20);
     let requiredExtraKey = rng.nextString(80);
 
-    let visiblekey = encryptViginere(requiredVisibleKey, decryptionKey)
-    let extrakey = encryptViginere(requiredExtraKey, decryptionKey)
+    //let visiblekey = encryptViginere(requiredVisibleKey, decryptionKey)
+    //let extrakey = encryptViginere(requiredExtraKey, decryptionKey)
+    let visiblekey = encryptCaesar(requiredVisibleKey, decryptionKey)
+    let extrakey = encryptCaesar(requiredExtraKey, decryptionKey)
     
     encodedData.visiblekey = visiblekey;
     encodedData.extrakey = extrakey;
@@ -192,7 +236,18 @@ const NEW_LOG : LogType = {
     attachments: ''
 }
 
-exportData(NEW_LOG, "")
+// const NEW_MISSION : MissionType = {
+//     id: 8,
+//     type: 'mission',
+//     name: '',
+//     icon: '',
+//     availability: '',
+//     description: ``,
+//     locationName: '',
+//     locationUrl: ''
+// }
+
+// exportData(NEW_MISSION, 4)
 //#endregion
 
 export class CommandLine {
@@ -410,43 +465,15 @@ export class CommandLine {
         
         // Step 2. Define Helpers
 
-        function shiftChar(c: string){
-            let code = c.charCodeAt(0);
-            if (code <= 'Z'.charCodeAt(0) && code >= 'A'.charCodeAt(0)){
-                code += shiftAmount;
-                if (code > 'Z'.charCodeAt(0)){
-                    code -= 26;
-                }
-                if (code < 'A'.charCodeAt(0)){
-                    code += 26;
-                }
-            }
-            else if (code <= '9'.charCodeAt(0) && code >= '0'.charCodeAt(0)){
-                code += shiftAmount;
-                if (code > '9'.charCodeAt(0)){
-                    code -= 10;
-                }
-                if (code < '0'.charCodeAt(0)){
-                    code += 10;
-                }
-            }
-            return String.fromCharCode(code);
-        }
-
-        function shiftString(s: string){
-            s = s.toUpperCase();
-            let result = '';
-            for (let i = 0; i < s.length; i++){
-                result += shiftChar(s[i]);
-            }
-            return result;
+        let decode = (str: string) => {
+            return decryptCaesar(str, shiftAmount);
         }
 
         // Step 3. Apply to Data
         let resultingData: EncodedData[] = [];
 
         for (const data of this.loadedData) {
-            resultingData.push(this.useFunctionOnDataCopy(data, shiftString));
+            resultingData.push(this.useFunctionOnDataCopy(data, decode));
         }
     
         return { resultingData }
