@@ -113,16 +113,16 @@ Sirona also happens to be the home of The Spire, the largest space elevator in t
         mass: "24.4 M🜨",
         description: "The system's largest planet, Nemetoma, is a swirling giant of muted ochres and reds. Its many moons and floating colonies are homes to hundreds of millions of people, forming a vast, scattered web of interconnected communities."
     },
-    9: {
-        order: 7,
-        name: "Belisama",
-        mass: "0.15 M🜨",
-        gravity: "0.45 g",
-        moon: true,
-        parent: 6,
-        visibleUnder: ['6', '9', '10', '11', '12'],
-        description: "Belisama’s rocky surface is riddled with jagged cliffs and sprawling craters, but its true mystery lies beneath. Its internal composition defies all known geologic models, leading scientists to theorize it might be the fragmented remnant of an ancient, alien megastructure. The moon’s enigmatic properties make it a hub for research and speculation, though mining efforts have yielded limited results."
-    },
+    // 9: {
+    //     order: 7,
+    //     name: "Belisama Belt",
+    //     mass: "0.15 M🜨",
+    //     gravity: "0.45 g",
+    //     moon: true,
+    //     parent: 6,
+    //     visibleUnder: ['6', '9', '10', '11', '12'],
+    //     description: "Belisama’s rocky surface is riddled with jagged cliffs and sprawling craters, but its true mystery lies beneath. Its internal composition defies all known geologic models, leading scientists to theorize it might be the fragmented remnant of an ancient, alien megastructure. The moon’s enigmatic properties make it a hub for research and speculation, though mining efforts have yielded limited results."
+    // },
     10: {
         order: 8,
         name: "Senuna",
@@ -131,7 +131,8 @@ Sirona also happens to be the home of The Spire, the largest space elevator in t
         moon: true,
         parent: 6,
         visibleUnder: ['6', '9', '10', '11', '12'],
-        description: "Blanketed by dense, jungle-like forests, Senuna is a breathtaking example of successful terraforming. The moon’s vibrant ecosystem pulses with an almost otherworldly energy, and long-term residents often report vivid spiritual visions or even a sense of connection to the moon itself. Some dismiss this as the effects of unknown pollen or spores, but others believe Senuna holds deeper, perhaps even sentient, mysteries."
+        //description: "Blanketed by dense, jungle-like forests, Senuna is a breathtaking example of successful terraforming. The moon’s vibrant ecosystem pulses with an almost otherworldly energy, and long-term residents often report vivid spiritual visions or even a sense of connection to the moon itself. Some dismiss this as the effects of unknown pollen or spores, but others believe Senuna holds deeper, perhaps even sentient, mysteries."
+        description: "The once-vibrant jungles of Senuna now smolder under the onslaught of crystalline meteors. Fires rage across its surface, consuming the lush forests that once inspired awe and reverence. Survivors speak of haunting visions, not of spiritual peace but of endless destruction, as if the moon itself mourns its dying ecosystems. The skies are choked with ash and glowing debris, casting the landscape in an eerie, flickering light."
     },
     11: {
         order: 9,
@@ -141,7 +142,8 @@ Sirona also happens to be the home of The Spire, the largest space elevator in t
         moon: true,
         parent: 6,
         visibleUnder: ['6', '9', '10', '11', '12'],
-        description: "Almost entirely covered in liquid water, Coventina is a moon of ceaseless motion. Tidal forces from Nemetoma drive immense geothermal vents, creating an ever-changing seascape. Floating research stations and underwater habitats explore the moon’s vast depths, where unique aquatic ecosystems thrive in the mineral-rich waters."
+        //description: "Almost entirely covered in liquid water, Coventina is a moon of ceaseless motion. Tidal forces from Nemetoma drive immense geothermal vents, creating an ever-changing seascape. Floating research stations and underwater habitats explore the moon’s vast depths, where unique aquatic ecosystems thrive in the mineral-rich waters."
+        description: "Coventina’s endless seas are no longer calm, churned into violent storms by the constant impacts from Belisama’s remains. Gigantic waves batter the floating research stations, while underwater habitats struggle to endure the shockwaves that echo through the moon’s oceans. The once-thriving aquatic ecosystems are devastated, and the water glows faintly from the crystal shards that now poison its depths."
     },
     12: {
         order: 10,
@@ -151,7 +153,8 @@ Sirona also happens to be the home of The Spire, the largest space elevator in t
         moon: true,
         parent: 6,
         visibleUnder: ['6', '9', '10', '11', '12'],
-        description: "A gleaming beacon in the void, Icovelluana’s surface is dominated by sprawling chrome cities that reflect Nemetoma’s ochre glow. The icy moon’s industrial hubs produce some of the system’s most advanced machinery, and its cutting-edge architecture is a testament to its inhabitants’ engineering prowess. Beneath its shimmering cities, vast ice reserves fuel its energy infrastructure."
+        //description: "A gleaming beacon in the void, Icovelluana’s surface is dominated by sprawling chrome cities that reflect Nemetoma’s ochre glow. The icy moon’s industrial hubs produce some of the system’s most advanced machinery, and its cutting-edge architecture is a testament to its inhabitants’ engineering prowess. Beneath its shimmering cities, vast ice reserves fuel its energy infrastructure."
+        description: "The gleaming chrome cities of Icovelluana are now scarred and pitted, their reflective surfaces marred by the crystalline fragments tearing through the atmosphere. The icy plains beyond the cities are littered with impact craters, and the temperature plummets as dust and debris shroud the moon. Panic grips the industrial hubs as power grids falter, and the once-proud beacon of engineering teeters on the edge of collapse."
     }, 
     7: {
         order: 11,
@@ -272,16 +275,16 @@ const planetData = [
         rotateSpeed: 3,
     },
     //#region Moons
-    { // Belisama
-        ...defaultPlanet,
-        id: 9,
-        position: { x: 0, y: 0, z: 0 },
-        radius: 0.26,
-        orbits: 6,
-        orbitRadius: 3,
-        rotateSpeed: 3,
-        resolution: 4,
-    },
+    // { // Belisama
+    //     ...defaultPlanet,
+    //     id: 9,
+    //     position: { x: 0, y: 0, z: 0 },
+    //     radius: 0.26,
+    //     orbits: 6,
+    //     orbitRadius: 3,
+    //     rotateSpeed: 3,
+    //     resolution: 4,
+    // },
     { // Senuna
         ...defaultPlanet,
         id: 10,
@@ -365,6 +368,15 @@ const beltData = [
         orbits: 4,
         orbitSpeed: -0.07,
         count: 200,
+    },
+    { // Nemetoma belt
+        id: 103,
+        position: { x: 0, y: 0, z: 0 },
+        innerRadius: 2.5,
+        outerRadius: 8,
+        orbits: 6,
+        orbitSpeed: 0.6,
+        count: 2000,
     },
 
 
